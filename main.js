@@ -804,7 +804,7 @@ function () {
         var bulletX = base_x + gun_x;
         var bulletY = base_y - gun_height;
         gameManager.registerBullet(new _Bullet__WEBPACK_IMPORTED_MODULE_5__["PlayerDefaultBullet"](bulletX, bulletY, 1, this));
-        this._timeBetweenShot = 200;
+        this._timeBetweenShot = 500;
       }
     }
   }, {
@@ -3756,7 +3756,7 @@ function () {
     _classCallCheck(this, LevelManager);
 
     this.tick = this.tick.bind(this);
-    this.level = 7;
+    this.level = 1;
     this._waitingLevelChange = 0;
     this.scoreBar = new _ScoreBar_js__WEBPACK_IMPORTED_MODULE_4__["default"]();
     _Manager_js__WEBPACK_IMPORTED_MODULE_3__["default"].on("updateScore", function (data) {
