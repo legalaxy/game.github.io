@@ -5900,7 +5900,7 @@ function () {
     _classCallCheck(this, LevelManager);
 
     this.tick = this.tick.bind(this);
-    this.level = 5;
+    this.level = 1;
     this._waitingLevelChange = 0;
     this.scoreBar = new _ScoreBar__WEBPACK_IMPORTED_MODULE_3__["default"]();
     _Manager__WEBPACK_IMPORTED_MODULE_2__["default"].on("updateScore", function (data) {
