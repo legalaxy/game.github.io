@@ -664,9 +664,15 @@ var Game = function Game() {
   }));
   _scenes_SceneManager_js__WEBPACK_IMPORTED_MODULE_5__["default"].registerScene("pause", new _scenes_GamePauseScene_js__WEBPACK_IMPORTED_MODULE_6__["default"]());
   _scenes_SceneManager_js__WEBPACK_IMPORTED_MODULE_5__["default"].registerScene("restart", new _scenes_RestartScene_js__WEBPACK_IMPORTED_MODULE_7__["default"]());
-  _scenes_SceneManager_js__WEBPACK_IMPORTED_MODULE_5__["default"].registerScene("shop", new _scenes_ShopScene_js__WEBPACK_IMPORTED_MODULE_10__["default"](this.playerInfo.playerConfiguration));
+  var shop = new _scenes_ShopScene_js__WEBPACK_IMPORTED_MODULE_10__["default"](this.playerInfo.playerConfiguration);
+
+  this._controlPanel.addControls(shop.controls);
+
+  _scenes_SceneManager_js__WEBPACK_IMPORTED_MODULE_5__["default"].registerScene("shop", shop);
   _scenes_SceneManager_js__WEBPACK_IMPORTED_MODULE_5__["default"].registerScene("nextLevelScene", new _scenes_NextLevelScene_js__WEBPACK_IMPORTED_MODULE_12__["default"]());
   _scenes_SceneManager_js__WEBPACK_IMPORTED_MODULE_5__["default"].showScene("startGame");
+
+  this._controlPanel.addControls(this.playerInfo.playerConfiguration.controls);
 };
 
 /* harmony default export */ __webpack_exports__["default"] = (Game);
@@ -708,6 +714,14 @@ function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.g
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); if (superClass) _setPrototypeOf(subClass, superClass); }
 
 function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
+
+function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _nonIterableSpread(); }
+
+function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance"); }
+
+function _iterableToArray(iter) { if (Symbol.iterator in Object(iter) || Object.prototype.toString.call(iter) === "[object Arguments]") return Array.from(iter); }
+
+function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = new Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -751,7 +765,9 @@ function () {
     key: "addImprovement",
     value: function addImprovement(name) {
       this._playerConfiguration.improvements[name] = true;
-      this.emit("improvement:add");
+      this.emit("improvement-".concat(name, ":added"), {
+        name: name
+      });
     }
   }, {
     key: "increaseSetting",
@@ -767,9 +783,77 @@ function () {
       }
     }
   }, {
+    key: "_initControls",
+    value: function _initControls() {
+      var _this = this;
+
+      this._auraButton = _GraphicsHelper__WEBPACK_IMPORTED_MODULE_5__["default"].createSprite({
+        name: "aura",
+        onClick: function onClick() {
+          _this._auraButton.visible = false;
+
+          _this.emit("improvement-shield:apply");
+        }
+      });
+      this._auraButton.visible = false;
+      this.on("improvement-shield:added", function () {
+        _this._auraButton.visible = true;
+      });
+      this._controls = [this._auraButton];
+    }
+  }, {
     key: "current",
     get: function get() {
       return this._playerConfiguration;
+    }
+  }, {
+    key: "controls",
+    get: function get() {
+      if (!this._controls) {
+        this._initControls();
+      }
+
+      return _toConsumableArray(this._controls);
+    }
+  }, {
+    key: "shopItems",
+    get: function get() {
+      var _this2 = this;
+
+      return [{
+        getPreview: function getPreview() {
+          return _GraphicsHelper__WEBPACK_IMPORTED_MODULE_5__["default"].createSprite({
+            name: "live"
+          });
+        },
+        cost: 40,
+        action: function action() {
+          _this2.increaseSetting("lives", 1);
+        }
+      }, {
+        getPreview: function getPreview() {
+          return _GraphicsHelper__WEBPACK_IMPORTED_MODULE_5__["default"].createSprite({
+            name: "healthBar"
+          });
+        },
+        cost: 10,
+        action: function action() {
+          _this2.increaseSetting("maxHealth");
+        }
+      }, {
+        getPreview: function getPreview() {
+          var item = _GraphicsHelper__WEBPACK_IMPORTED_MODULE_5__["default"].createSprite({
+            name: "aura"
+          });
+          item.width = 50;
+          item.height = 50;
+          return item;
+        },
+        cost: 10,
+        action: function action() {
+          _this2.addImprovement("shield");
+        }
+      }];
     }
   }]);
 
@@ -809,17 +893,24 @@ function () {
   }, {
     key: "initShield",
     value: function initShield() {
-      this.shield = _GraphicsHelper__WEBPACK_IMPORTED_MODULE_5__["default"].createSprite({
-        name: "aura",
-        x: 0,
-        y: -60
+      var _this3 = this;
+
+      this._playerConfiguration.on("improvement-shield:apply", function () {
+        _this3.shield = _GraphicsHelper__WEBPACK_IMPORTED_MODULE_5__["default"].createSprite({
+          name: "aura",
+          x: 0,
+          y: -60
+        });
+
+        _this3.shield.anchor.set(0.5);
+
+        _this3.shield.setParent(_this3.container);
+
+        new tween_js__WEBPACK_IMPORTED_MODULE_8___default.a.Tween(_this3.shield.scale).to({
+          x: [1.2, 1],
+          y: [1.2, 1]
+        }, 3000).repeat(Infinity).start();
       });
-      this.shield.anchor.set(0.5);
-      this.shield.setParent(this.container);
-      new tween_js__WEBPACK_IMPORTED_MODULE_8___default.a.Tween(this.shield.scale).to({
-        x: [1.2, 1],
-        y: [1.2, 1]
-      }, 3000).repeat(Infinity).start();
     }
   }, {
     key: "initGun",
@@ -830,7 +921,7 @@ function () {
   }, {
     key: "initHealthBar",
     value: function initHealthBar() {
-      var _this = this;
+      var _this4 = this;
 
       var maxHealth = this._playerConfiguration.current.maxHealth;
       this.healthBar = new _components_HealthBar__WEBPACK_IMPORTED_MODULE_7__["default"]({
@@ -845,24 +936,24 @@ function () {
         var value = _ref.value;
         console.info("setting-maxHealth:changed");
 
-        _this.container.removeChild(_this.healthBar.container);
+        _this4.container.removeChild(_this4.healthBar.container);
 
-        _this.healthBar.destroy();
+        _this4.healthBar.destroy();
 
-        _this.healthBar = new _components_HealthBar__WEBPACK_IMPORTED_MODULE_7__["default"]({
+        _this4.healthBar = new _components_HealthBar__WEBPACK_IMPORTED_MODULE_7__["default"]({
           x: 0,
           y: 20,
           width: 100,
           maxHealth: value
         });
 
-        _this.healthBar.container.setParent(_this.container);
+        _this4.healthBar.container.setParent(_this4.container);
       });
     }
   }, {
     key: "initLives",
     value: function initLives() {
-      var _this2 = this;
+      var _this5 = this;
 
       var lives = this._playerConfiguration.current.lives;
       this.lives = new _Lives_js__WEBPACK_IMPORTED_MODULE_0__["default"](lives);
@@ -871,26 +962,26 @@ function () {
         var value = _ref2.value;
         console.info("setting-lives:changed");
 
-        _this2.lives.destroy();
+        _this5.lives.destroy();
 
-        _this2.lives = new _Lives_js__WEBPACK_IMPORTED_MODULE_0__["default"](value);
+        _this5.lives = new _Lives_js__WEBPACK_IMPORTED_MODULE_0__["default"](value);
       });
     }
   }, {
     key: "getBulletInfo",
     value: function getBulletInfo() {
-      var _this3 = this;
+      var _this6 = this;
 
       return {
         timeBetweenShot: 800,
         getStartPosition: function getStartPosition() {
-          var _this3$container = _this3.container,
-              base_x = _this3$container.x,
-              base_y = _this3$container.y;
+          var _this6$container = _this6.container,
+              base_x = _this6$container.x,
+              base_y = _this6$container.y;
 
-          var _this3$gun$getBulletS = _this3.gun.getBulletStartPosition(),
-              gun_x = _this3$gun$getBulletS.x,
-              gun_y = _this3$gun$getBulletS.y;
+          var _this6$gun$getBulletS = _this6.gun.getBulletStartPosition(),
+              gun_x = _this6$gun$getBulletS.x,
+              gun_y = _this6$gun$getBulletS.y;
 
           return {
             x: base_x + gun_x,
@@ -949,6 +1040,10 @@ function () {
   }, {
     key: "onCollision",
     value: function onCollision() {
+      if (this.shield != null) {
+        return;
+      }
+
       this.healthBar.decreaseHealth(1);
 
       if (this.healthBar.health == 0) {
@@ -2708,7 +2803,6 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _styles_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(73);
 /* harmony import */ var tween_js__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(66);
 /* harmony import */ var tween_js__WEBPACK_IMPORTED_MODULE_8___default = /*#__PURE__*/__webpack_require__.n(tween_js__WEBPACK_IMPORTED_MODULE_8__);
-/* harmony import */ var _components_AvatarsController__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(98);
 function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
 function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; var ownKeys = Object.keys(source); if (typeof Object.getOwnPropertySymbols === 'function') { ownKeys = ownKeys.concat(Object.getOwnPropertySymbols(source).filter(function (sym) { return Object.getOwnPropertyDescriptor(source, sym).enumerable; })); } ownKeys.forEach(function (key) { _defineProperty(target, key, source[key]); }); } return target; }
@@ -2734,7 +2828,6 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
 
 function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
-
 
 
 
@@ -5151,6 +5244,14 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _Manager_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(85);
 /* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(68);
 /* harmony import */ var _styles_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(73);
+function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _nonIterableSpread(); }
+
+function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance"); }
+
+function _iterableToArray(iter) { if (Symbol.iterator in Object(iter) || Object.prototype.toString.call(iter) === "[object Arguments]") return Array.from(iter); }
+
+function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = new Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } }
+
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
@@ -5169,97 +5270,65 @@ var ControlPanel =
 /*#__PURE__*/
 function () {
   function ControlPanel() {
-    var _this = this;
-
     _classCallCheck(this, ControlPanel);
 
-    this._container = null;
+    this._container = _GraphicsHelper__WEBPACK_IMPORTED_MODULE_3__["default"].createContainer({
+      x: 0,
+      y: _settings_js__WEBPACK_IMPORTED_MODULE_1__["default"].appSizes.height / 2 - 30
+    });
+    _Starter_js__WEBPACK_IMPORTED_MODULE_0__["default"].field.addChild(this._container);
     this._pauseButton = null;
     this._restartButton = null;
-    this._moneyText = null;
-    this._money = 0;
+    this._controls = [];
 
     this._init();
 
-    _Manager_js__WEBPACK_IMPORTED_MODULE_4__["default"].on("updateScore", function (data) {
-      switch (data.action) {
-        case "enemy:destroy":
-          {
-            //this.increaseMoney = data.info.reward;
-            _this._money += data.info.reward;
-            _this._moneyText.text = "$ ".concat(_this._money);
-            break;
-          }
-
-        default:
-          console.info("Cannot update reward due to unknown action '".concat(data.action, "'"));
-      }
-    });
+    this._renderControls();
   }
 
   _createClass(ControlPanel, [{
+    key: "addControls",
+    value: function addControls(controls) {
+      var _this$_controls;
+
+      (_this$_controls = this._controls).push.apply(_this$_controls, _toConsumableArray(controls));
+
+      this._renderControls();
+    }
+  }, {
+    key: "_renderControls",
+    value: function _renderControls() {
+      var _this = this;
+
+      console.info("_renderControls");
+      var widthOffset = -(_settings_js__WEBPACK_IMPORTED_MODULE_1__["default"].appSizes.width / 2) + 50;
+
+      this._controls.forEach(function (c) {
+        c.y = -50;
+        c.x = widthOffset; // Sprites' height/width = 1 by default (if is hasn't been set yet)
+
+        c.height = c.height > 1 ? c.height : 70;
+        c.width = c.width > 1 ? c.width : 70;
+        c.setParent(_this._container);
+        widthOffset += c.width + 10;
+      });
+    }
+  }, {
     key: "_init",
     value: function _init() {
-      this._container = _GraphicsHelper__WEBPACK_IMPORTED_MODULE_3__["default"].createContainer({
-        x: 0,
-        y: _settings_js__WEBPACK_IMPORTED_MODULE_1__["default"].appSizes.height / 2 - 30
-      });
-      _Starter_js__WEBPACK_IMPORTED_MODULE_0__["default"].field.addChild(this._container);
-      this._pauseButton = _GraphicsHelper__WEBPACK_IMPORTED_MODULE_3__["default"].createSprite({
+      this._controls.push(_GraphicsHelper__WEBPACK_IMPORTED_MODULE_3__["default"].createSprite({
         name: "pause",
-        x: -(_settings_js__WEBPACK_IMPORTED_MODULE_1__["default"].appSizes.width / 2) + 50,
-        y: -10,
         onClick: function onClick() {
           _scenes_SceneManager_js__WEBPACK_IMPORTED_MODULE_2__["default"].showScene("pause");
         }
-      });
-      this._pauseButton.buttonMode = true;
+      }));
 
-      this._pauseButton.anchor.set(0.5);
-
-      this._pauseButton.scale.set(0.6);
-
-      this._pauseButton.setParent(this._container);
-
-      this._restartButton = _GraphicsHelper__WEBPACK_IMPORTED_MODULE_3__["default"].createSprite({
+      this._controls.push(_GraphicsHelper__WEBPACK_IMPORTED_MODULE_3__["default"].createSprite({
         name: "restart",
-        x: -(_settings_js__WEBPACK_IMPORTED_MODULE_1__["default"].appSizes.width / 2) + 115,
-        y: -10,
         onClick: function onClick() {
           _scenes_SceneManager_js__WEBPACK_IMPORTED_MODULE_2__["default"].showScene("restart");
         }
-      });
-      this._restartButton.buttonMode = true;
-
-      this._restartButton.anchor.set(0.5);
-
-      this._restartButton.scale.set(0.6);
-
-      this._restartButton.setParent(this._container);
-
-      this._shopButton = _GraphicsHelper__WEBPACK_IMPORTED_MODULE_3__["default"].createSprite({
-        name: "shop",
-        x: -(_settings_js__WEBPACK_IMPORTED_MODULE_1__["default"].appSizes.width / 2) + 175,
-        y: -10,
-        onClick: function onClick() {
-          _scenes_SceneManager_js__WEBPACK_IMPORTED_MODULE_2__["default"].showScene("shop");
-        }
-      });
-      this._shopButton.buttonMode = true;
-
-      this._shopButton.anchor.set(0.5);
-
-      this._shopButton.scale.set(0.6);
-
-      this._shopButton.setParent(this._container);
-
-      this._moneyText = _utils_js__WEBPACK_IMPORTED_MODULE_5__["default"].drawText({
-        parent: this._container,
-        text: "$ ".concat(this._money),
-        x: -(_settings_js__WEBPACK_IMPORTED_MODULE_1__["default"].appSizes.width / 2) + 250,
-        y: -10,
-        style: _styles_js__WEBPACK_IMPORTED_MODULE_6__["default"].score
-      });
+      }));
     }
   }]);
 
@@ -5727,14 +5796,14 @@ function () {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _settings_levelSettings__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(89);
-/* harmony import */ var _Enemy__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(79);
-/* harmony import */ var _Manager__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(85);
-/* harmony import */ var _ScoreBar__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(90);
-/* harmony import */ var _scenes_SceneManager__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(84);
+/* harmony import */ var _settings_levelSettings_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(89);
+/* harmony import */ var _Enemy_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(79);
+/* harmony import */ var _Manager_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(85);
+/* harmony import */ var _ScoreBar_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(90);
+/* harmony import */ var _scenes_SceneManager_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(84);
 /* harmony import */ var _GraphicsHelper__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(74);
 /* harmony import */ var _settings_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(67);
-/* harmony import */ var _scenes_MainGameScene__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(86);
+/* harmony import */ var _scenes_MainGameScene_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(86);
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
@@ -5750,31 +5819,31 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
 
 
 var ENEMY_BY_ID = {
-  1: _Enemy__WEBPACK_IMPORTED_MODULE_1__["EnemyEasyLevel"],
-  2: _Enemy__WEBPACK_IMPORTED_MODULE_1__["EnemyMediumLevel"],
-  3: _Enemy__WEBPACK_IMPORTED_MODULE_1__["EnemyHardLevel"],
-  4: _Enemy__WEBPACK_IMPORTED_MODULE_1__["WaterEnemy"],
-  5: _Enemy__WEBPACK_IMPORTED_MODULE_1__["FireEnemy"],
-  6: _Enemy__WEBPACK_IMPORTED_MODULE_1__["EarthEnemy"],
-  7: _Enemy__WEBPACK_IMPORTED_MODULE_1__["WindEnemy"],
-  8: _Enemy__WEBPACK_IMPORTED_MODULE_1__["WoodenShield"],
-  9: _Enemy__WEBPACK_IMPORTED_MODULE_1__["StoneShield"],
-  10: _Enemy__WEBPACK_IMPORTED_MODULE_1__["IronShield"],
-  50: _Enemy__WEBPACK_IMPORTED_MODULE_1__["TrapDiller"],
-  51: _Enemy__WEBPACK_IMPORTED_MODULE_1__["Liunk"],
-  52: _Enemy__WEBPACK_IMPORTED_MODULE_1__["TvoiBratan"],
-  53: _Enemy__WEBPACK_IMPORTED_MODULE_1__["St228"],
-  54: _Enemy__WEBPACK_IMPORTED_MODULE_1__["Jekson"],
-  55: _Enemy__WEBPACK_IMPORTED_MODULE_1__["THC"],
-  56: _Enemy__WEBPACK_IMPORTED_MODULE_1__["Pozytron"],
-  57: _Enemy__WEBPACK_IMPORTED_MODULE_1__["CHEMIUS"],
-  58: _Enemy__WEBPACK_IMPORTED_MODULE_1__["HelpMeDude"],
-  59: _Enemy__WEBPACK_IMPORTED_MODULE_1__["SIZIB3ken"],
-  70: _Enemy__WEBPACK_IMPORTED_MODULE_1__["Ozmen"],
-  71: _Enemy__WEBPACK_IMPORTED_MODULE_1__["Dekodans"],
-  72: _Enemy__WEBPACK_IMPORTED_MODULE_1__["Ganjamurder"],
-  73: _Enemy__WEBPACK_IMPORTED_MODULE_1__["Syava"],
-  74: _Enemy__WEBPACK_IMPORTED_MODULE_1__["Tetraceklinur"]
+  1: _Enemy_js__WEBPACK_IMPORTED_MODULE_1__["EnemyEasyLevel"],
+  2: _Enemy_js__WEBPACK_IMPORTED_MODULE_1__["EnemyMediumLevel"],
+  3: _Enemy_js__WEBPACK_IMPORTED_MODULE_1__["EnemyHardLevel"],
+  4: _Enemy_js__WEBPACK_IMPORTED_MODULE_1__["WaterEnemy"],
+  5: _Enemy_js__WEBPACK_IMPORTED_MODULE_1__["FireEnemy"],
+  6: _Enemy_js__WEBPACK_IMPORTED_MODULE_1__["EarthEnemy"],
+  7: _Enemy_js__WEBPACK_IMPORTED_MODULE_1__["WindEnemy"],
+  8: _Enemy_js__WEBPACK_IMPORTED_MODULE_1__["WoodenShield"],
+  9: _Enemy_js__WEBPACK_IMPORTED_MODULE_1__["StoneShield"],
+  10: _Enemy_js__WEBPACK_IMPORTED_MODULE_1__["IronShield"],
+  50: _Enemy_js__WEBPACK_IMPORTED_MODULE_1__["TrapDiller"],
+  51: _Enemy_js__WEBPACK_IMPORTED_MODULE_1__["Liunk"],
+  52: _Enemy_js__WEBPACK_IMPORTED_MODULE_1__["TvoiBratan"],
+  53: _Enemy_js__WEBPACK_IMPORTED_MODULE_1__["St228"],
+  54: _Enemy_js__WEBPACK_IMPORTED_MODULE_1__["Jekson"],
+  55: _Enemy_js__WEBPACK_IMPORTED_MODULE_1__["THC"],
+  56: _Enemy_js__WEBPACK_IMPORTED_MODULE_1__["Pozytron"],
+  57: _Enemy_js__WEBPACK_IMPORTED_MODULE_1__["CHEMIUS"],
+  58: _Enemy_js__WEBPACK_IMPORTED_MODULE_1__["HelpMeDude"],
+  59: _Enemy_js__WEBPACK_IMPORTED_MODULE_1__["SIZIB3ken"],
+  70: _Enemy_js__WEBPACK_IMPORTED_MODULE_1__["Ozmen"],
+  71: _Enemy_js__WEBPACK_IMPORTED_MODULE_1__["Dekodans"],
+  72: _Enemy_js__WEBPACK_IMPORTED_MODULE_1__["Ganjamurder"],
+  73: _Enemy_js__WEBPACK_IMPORTED_MODULE_1__["Syava"],
+  74: _Enemy_js__WEBPACK_IMPORTED_MODULE_1__["Tetraceklinur"]
 };
 
 var EnemiesManager =
@@ -5829,7 +5898,32 @@ function () {
       var id = settings.id;
       var enemyClass = ENEMY_BY_ID[id] || ENEMY_BY_ID[1];
       var enemy = new enemyClass(settings);
+
+      this._setEnemyName(enemy);
+
       return enemy;
+    }
+  }, {
+    key: "_setEnemyName",
+    value: function _setEnemyName(obj) {
+      return; // if (!obj.avatar) {
+      //     return;
+      // }
+      // const avatar = GraphicsHelper.createSprite({
+      //     name: obj.avatar,
+      //     x: 0,
+      //     y: 0,
+      // });
+      // avatar.setParent(starter.field);
+      // avatar.scale.set(0.4);
+      // avatar.alpha = 0;
+      // this.avatars.push(avatar);
+      // let xPosition = 0;
+      // this.avatars.forEach(el => {
+      //     el.x = xPosition;
+      //     el.alpha = 1;
+      //     xPosition += 70;
+      // });
     }
   }, {
     key: "_initEnemies",
@@ -5838,7 +5932,6 @@ function () {
 
       var y = -_settings_js__WEBPACK_IMPORTED_MODULE_6__["default"].appSizes.height / 2 + 40;
       var maxRowHeight = 0;
-      var idAvatar = 0;
 
       for (var i = 0; i < levelInfo.length; i++) {
         var step = _settings_js__WEBPACK_IMPORTED_MODULE_6__["default"].appSizes.width / levelInfo[i].length - 15;
@@ -5869,6 +5962,7 @@ function () {
           maxRowHeight = Math.max(maxRowHeight, enemy.heights[id]);
         }
 
+        console.log(maxRowHeight);
         y += maxRowHeight + 25;
       }
 
@@ -5876,7 +5970,7 @@ function () {
 
       this._enemies.forEach(function (_ref5) {
         var enemy = _ref5.enemy;
-        _Manager__WEBPACK_IMPORTED_MODULE_2__["default"].registerEnemy(enemy);
+        _Manager_js__WEBPACK_IMPORTED_MODULE_2__["default"].registerEnemy(enemy);
         enemy.on("destroy", function () {
           _this._enemies = _this._enemies.filter(function (x) {
             return x.enemy !== enemy;
@@ -5902,8 +5996,8 @@ function () {
     this.tick = this.tick.bind(this);
     this.level = 1;
     this._waitingLevelChange = 0;
-    this.scoreBar = new _ScoreBar__WEBPACK_IMPORTED_MODULE_3__["default"]();
-    _Manager__WEBPACK_IMPORTED_MODULE_2__["default"].on("updateScore", function (data) {
+    this.scoreBar = new _ScoreBar_js__WEBPACK_IMPORTED_MODULE_3__["default"]();
+    _Manager_js__WEBPACK_IMPORTED_MODULE_2__["default"].on("updateScore", function (data) {
       switch (data.action) {
         case "enemy:destroy":
           {
@@ -5929,14 +6023,14 @@ function () {
     value: function restart() {
       console.info("restart level");
       this.scoreBar.reset();
-      _Manager__WEBPACK_IMPORTED_MODULE_2__["default"].reset();
+      _Manager_js__WEBPACK_IMPORTED_MODULE_2__["default"].reset();
 
       this._initLevelObjets();
     }
   }, {
     key: "_initLevelObjets",
     value: function _initLevelObjets() {
-      var levelInfo = _settings_levelSettings__WEBPACK_IMPORTED_MODULE_0__["default"][this.level];
+      var levelInfo = _settings_levelSettings_js__WEBPACK_IMPORTED_MODULE_0__["default"][this.level];
 
       if (!levelInfo) {
         console.log("Cannot find level info for level ".concat(this.level));
@@ -5950,21 +6044,21 @@ function () {
     key: "tick",
     value: function tick(delta) {
       // check GAME OVER
-      if (!_Manager__WEBPACK_IMPORTED_MODULE_2__["default"].playerExists) {
+      if (!_Manager_js__WEBPACK_IMPORTED_MODULE_2__["default"].playerExists) {
         // show startGame scene to choose the player
-        _scenes_SceneManager__WEBPACK_IMPORTED_MODULE_4__["default"].showScene("startGame");
+        _scenes_SceneManager_js__WEBPACK_IMPORTED_MODULE_4__["default"].showScene("startGame");
         return;
       } // check NEXT LEVEL
 
 
-      if (!_Manager__WEBPACK_IMPORTED_MODULE_2__["default"].enemiesExist) {
+      if (!_Manager_js__WEBPACK_IMPORTED_MODULE_2__["default"].enemiesExist) {
         this._waitingLevelChange += delta; // delay to wait until all animations done
 
         if (this._waitingLevelChange > 700) {
           this._waitingLevelChange = 0;
           this.level += 1;
-          _Manager__WEBPACK_IMPORTED_MODULE_2__["default"].destroyBullets();
-          _scenes_SceneManager__WEBPACK_IMPORTED_MODULE_4__["default"].showScene("continueGame");
+          _Manager_js__WEBPACK_IMPORTED_MODULE_2__["default"].destroyBullets();
+          _scenes_SceneManager_js__WEBPACK_IMPORTED_MODULE_4__["default"].showScene("continueGame");
 
           this._initLevelObjets();
 
@@ -5978,7 +6072,7 @@ function () {
 }();
 
 var levelManager = new LevelManager();
-_scenes_MainGameScene__WEBPACK_IMPORTED_MODULE_7__["default"].addChild(levelManager);
+_scenes_MainGameScene_js__WEBPACK_IMPORTED_MODULE_7__["default"].addChild(levelManager);
 /* harmony default export */ __webpack_exports__["default"] = (levelManager);
 
 /***/ }),
@@ -6517,12 +6611,18 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _styles__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(73);
 /* harmony import */ var _components_Lamp__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(95);
 /* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(68);
-/* harmony import */ var _SceneManager_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(84);
+/* harmony import */ var pixi_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(8);
+/* harmony import */ var _SceneManager_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(84);
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; var ownKeys = Object.keys(source); if (typeof Object.getOwnPropertySymbols === 'function') { ownKeys = ownKeys.concat(Object.getOwnPropertySymbols(source).filter(function (sym) { return Object.getOwnPropertyDescriptor(source, sym).enumerable; })); } ownKeys.forEach(function (key) { _defineProperty(target, key, source[key]); }); } return target; }
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
 
 function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
 
 
 
@@ -6540,30 +6640,34 @@ function () {
 
     _classCallCheck(this, ShopScene);
 
-    this._container = _GraphicsHelper__WEBPACK_IMPORTED_MODULE_2__["default"].createContainer({
-      x: _settings_js__WEBPACK_IMPORTED_MODULE_1__["default"].appSizes.width / 2,
-      y: _settings_js__WEBPACK_IMPORTED_MODULE_1__["default"].appSizes.height / 2
+    this._container = _GraphicsHelper__WEBPACK_IMPORTED_MODULE_2__["default"].crateSceneContainer({
+      background: "bg_1"
     });
-    this._playerConfiguration = playerConfiguration;
     _Starter__WEBPACK_IMPORTED_MODULE_0__["default"].app.stage.addChild(this._container);
-    _Starter__WEBPACK_IMPORTED_MODULE_0__["default"].initiated.then(function () {
-      _this._init();
+    this._playerConfiguration = playerConfiguration;
+    this._moneyCount = 0;
+
+    this._init();
+
+    gameManager.on("updateScore", function (data) {
+      switch (data.action) {
+        case "enemy:destroy":
+          {
+            _this._updateMoney(data.info.reward);
+
+            break;
+          }
+
+        default:
+          console.info("Cannot update reward due to unknown action '".concat(data.action, "'"));
+      }
     });
+    this.hide();
   }
 
   _createClass(ShopScene, [{
     key: "_init",
     value: function _init() {
-      var _this2 = this;
-
-      this._background = _GraphicsHelper__WEBPACK_IMPORTED_MODULE_2__["default"].createSprite({
-        name: "bg_1",
-        x: -_settings_js__WEBPACK_IMPORTED_MODULE_1__["default"].appSizes.width / 2,
-        y: -_settings_js__WEBPACK_IMPORTED_MODULE_1__["default"].appSizes.height / 2
-      });
-
-      this._background.setParent(this._container);
-
       this._shopBackGround = _GraphicsHelper__WEBPACK_IMPORTED_MODULE_2__["default"].createSprite({
         name: "shop_board"
       });
@@ -6608,10 +6712,9 @@ function () {
         x: _settings_js__WEBPACK_IMPORTED_MODULE_1__["default"].appSizes.width / 2 - 50,
         y: -(_settings_js__WEBPACK_IMPORTED_MODULE_1__["default"].appSizes.height / 2) + 50,
         onClick: function onClick() {
-          _SceneManager_js__WEBPACK_IMPORTED_MODULE_6__["default"].showScene("nextLevelScene");
+          _SceneManager_js__WEBPACK_IMPORTED_MODULE_7__["default"].showScene("nextLevelScene");
         }
       });
-      this._closeButton.buttonMode = true;
 
       this._closeButton.anchor.set(0.5);
 
@@ -6657,6 +6760,50 @@ function () {
       this._leftLamp = new _components_Lamp__WEBPACK_IMPORTED_MODULE_4__["default"](this._container, -360, -450, 6000);
       this._rightLamp = new _components_Lamp__WEBPACK_IMPORTED_MODULE_4__["default"](this._container, 370, -450, 8000); //-----------------------CELLS-------------------------------//
 
+      this._shopMoney = new pixi_js__WEBPACK_IMPORTED_MODULE_6__["Text"]("", _objectSpread({}, _styles__WEBPACK_IMPORTED_MODULE_3__["default"].score, {
+        fontSize: 45
+      }));
+      this._shopMoney.x = -600;
+      this._shopMoney.y = 300;
+
+      this._shopMoney.setParent(this._container);
+
+      this._initShopItems();
+
+      this._initControls();
+    }
+  }, {
+    key: "_initControls",
+    value: function _initControls() {
+      this._shopButton = _GraphicsHelper__WEBPACK_IMPORTED_MODULE_2__["default"].createSprite({
+        name: "shop",
+        onClick: function onClick() {
+          _SceneManager_js__WEBPACK_IMPORTED_MODULE_7__["default"].showScene("shop");
+        }
+      });
+      this._moneyTextContainer = _GraphicsHelper__WEBPACK_IMPORTED_MODULE_2__["default"].createContainer();
+      this._moneyText = new pixi_js__WEBPACK_IMPORTED_MODULE_6__["Text"]("", _objectSpread({}, _styles__WEBPACK_IMPORTED_MODULE_3__["default"].score, {
+        fontSize: 30
+      }));
+      this._moneyText.y = -10;
+
+      this._moneyText.anchor.set(0, -0.5);
+
+      this._moneyText.setParent(this._moneyTextContainer);
+
+      this._updateMoney();
+    }
+  }, {
+    key: "_initShopItems",
+    value: function _initShopItems() {
+      var _this2 = this;
+
+      if (this._cellContainer) {
+        this._container.removeChild(this._cellContainer);
+
+        this._cellContainer.destroy(true);
+      }
+
       this._cellContainer = _GraphicsHelper__WEBPACK_IMPORTED_MODULE_2__["default"].createContainer({
         x: -250,
         y: 120
@@ -6664,94 +6811,127 @@ function () {
 
       this._container.addChild(this._cellContainer);
 
-      var stepY = 0;
-      var tiles = [{
-        name: "live",
-        cost: 10,
-        action: function action() {
-          _this2._playerConfiguration.increaseSetting("lives", 1);
-        }
-      }, {
-        name: "healthBar",
-        cost: 10,
-        action: function action() {
-          _this2._playerConfiguration.increaseSetting("maxHealth");
-        }
-      }];
+      var shopItems = this._playerConfiguration.shopItems;
 
-      for (var i = 0; i < 2; i++) {
-        var stepX = 0;
-
-        for (var j = 0; j < 4; j++) {
-          this.createItem(tiles[i * 2 + j], stepX, stepY);
-          stepX += 170;
-        }
-
-        stepY += 150;
-      }
-
-      this.hide();
+      this._getItemsPositions().forEach(function (pos, index) {
+        _this2._createItem(shopItems[index], pos.x, pos.y);
+      });
     }
   }, {
-    key: "createItem",
-    value: function createItem(itemInfo, x, y) {
+    key: "_getItemsPositions",
+    value: function _getItemsPositions() {
+      var positions = [];
+
+      for (var i = 0; i < 2; i++) {
+        for (var j = 0; j < 4; j++) {
+          positions.push({
+            x: j * 170,
+            y: i * 150
+          });
+        }
+      }
+
+      return positions;
+    }
+  }, {
+    key: "_createItem",
+    value: function _createItem(itemInfo, x, y) {
+      var _this3 = this;
+
       var cell = _GraphicsHelper__WEBPACK_IMPORTED_MODULE_2__["default"].createSprite({
         name: "shop_cell",
         x: x,
         y: y
       });
       cell.anchor.set(0.5);
-      cell.scale.set(1);
       cell.setParent(this._cellContainer);
 
-      if (itemInfo) {
-        var name = itemInfo.name,
-            cost = itemInfo.cost,
-            action = itemInfo.action;
-        var item = _GraphicsHelper__WEBPACK_IMPORTED_MODULE_2__["default"].createSprite({
-          name: name,
-          x: x - 20,
-          y: y + 10
-        });
-        item.anchor.set(0.5);
-        item.scale.set(0.8);
-        item.setParent(this._cellContainer);
-        var ok = _GraphicsHelper__WEBPACK_IMPORTED_MODULE_2__["default"].createSprite({
-          name: "ok",
-          x: 105,
-          y: -25,
-          onClick: action
-        });
-        ok.buttonMode = true;
-        ok.anchor.set(0.5);
-        ok.scale.set(0.8);
-        ok.setParent(item);
-        _utils_js__WEBPACK_IMPORTED_MODULE_5__["default"].drawText({
-          text: "+1",
-          x: 0,
-          y: 0,
-          color: 0xff43c3,
-          parent: item,
-          style: _styles__WEBPACK_IMPORTED_MODULE_3__["default"].shoperName
-        });
-        _utils_js__WEBPACK_IMPORTED_MODULE_5__["default"].drawText({
-          text: "".concat(cost, "$"),
-          x: 25,
-          y: 50,
-          parent: item,
-          style: _styles__WEBPACK_IMPORTED_MODULE_3__["default"].shoperName
-        });
+      if (!itemInfo) {
+        return;
       }
+
+      var getPreview = itemInfo.getPreview,
+          cost = itemInfo.cost,
+          action = itemInfo.action;
+      var item = getPreview();
+      item.x = -20;
+      item.y = +10;
+      item.anchor.set(0.5);
+      item.setParent(cell);
+      _utils_js__WEBPACK_IMPORTED_MODULE_5__["default"].drawText({
+        text: "+1",
+        x: 35,
+        y: 10,
+        color: 0xff43c3,
+        parent: cell,
+        style: _styles__WEBPACK_IMPORTED_MODULE_3__["default"].shoperName
+      });
+
+      var canBuy = this._canBuy(cost);
+
+      var color = canBuy ? 0x009900 : 0x990000;
+      _utils_js__WEBPACK_IMPORTED_MODULE_5__["default"].drawText({
+        text: "".concat(cost, "$"),
+        x: 0,
+        y: 50,
+        parent: cell,
+        style: _objectSpread({}, _styles__WEBPACK_IMPORTED_MODULE_3__["default"].shoperName, {
+          fill: color
+        })
+      });
+
+      if (canBuy) {
+        var buyButton = _GraphicsHelper__WEBPACK_IMPORTED_MODULE_2__["default"].createSprite({
+          name: "ok",
+          x: 70,
+          y: -20,
+          onClick: function onClick() {
+            _this3._buyItem(cost);
+
+            action();
+          }
+        });
+        buyButton.anchor.set(0.5);
+        buyButton.scale.set(0.8);
+        buyButton.setParent(cell);
+      }
+    }
+  }, {
+    key: "_canBuy",
+    value: function _canBuy(cost) {
+      return this._moneyCount >= cost;
+    }
+  }, {
+    key: "_buyItem",
+    value: function _buyItem(cost) {
+      this._updateMoney(-cost);
+
+      this._initShopItems();
+    }
+  }, {
+    key: "_updateMoney",
+    value: function _updateMoney() {
+      var value = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 0;
+      this._moneyCount = Math.max(0, this._moneyCount + value);
+      this._moneyText.text = "$ ".concat(this._moneyCount);
+      this._shopMoney.text = "$ ".concat(this._moneyCount);
     }
   }, {
     key: "show",
     value: function show() {
+      this._initShopItems();
+
       this._container.visible = true;
     }
   }, {
     key: "hide",
     value: function hide() {
       this._container.visible = false;
+    }
+  }, {
+    key: "controls",
+    get: function get() {
+      return [this._shopButton, this._moneyTextContainer];
     }
   }]);
 
@@ -7108,87 +7288,6 @@ function () {
 }();
 
 
-
-/***/ }),
-/* 98 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _Starter_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(7);
-/* harmony import */ var _settings_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(67);
-/* harmony import */ var _GraphicsHelper__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(74);
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
-
-function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
-
-
-
-
-
-var AvatarsController =
-/*#__PURE__*/
-function () {
-  function AvatarsController() {
-    _classCallCheck(this, AvatarsController);
-
-    this._container = null;
-    this.avatars = [];
-    this.avatarsCounter = 0;
-  }
-
-  _createClass(AvatarsController, [{
-    key: "registerAvatar",
-    value: function registerAvatar(settings) {
-      var name = settings.name,
-          id = settings.id;
-
-      if (!this._container) {
-        this._container = _GraphicsHelper__WEBPACK_IMPORTED_MODULE_2__["default"].createContainer({
-          x: _settings_js__WEBPACK_IMPORTED_MODULE_1__["default"].appSizes.width / 2 - 120,
-          y: _settings_js__WEBPACK_IMPORTED_MODULE_1__["default"].appSizes.height / 2 - 100
-        });
-        _Starter_js__WEBPACK_IMPORTED_MODULE_0__["default"].field.addChild(this._container);
-      }
-
-      var avatar = _GraphicsHelper__WEBPACK_IMPORTED_MODULE_2__["default"].createSprite({
-        name: name,
-        x: 0 - this.avatarsCounter * 100,
-        y: 0
-      });
-      avatar.id = id;
-      avatar.scale.set(0.6);
-      avatar.setParent(this._container);
-      this.avatars.push(avatar);
-      this.avatarsCounter++;
-    }
-  }, {
-    key: "fill",
-    value: function fill(id) {
-      var avatar = this.avatars.filter(function (sprite) {
-        return sprite.id === id;
-      });
-      avatar.tint = 0x999999;
-    }
-  }, {
-    key: "reset",
-    value: function reset() {
-      var _this = this;
-
-      this.avatars.forEach(function (el) {
-        _this._container.removeChild(el);
-      });
-      this.avatarsCounter = 0;
-    }
-  }]);
-
-  return AvatarsController;
-}();
-
-var panel = new AvatarsController();
-/* harmony default export */ __webpack_exports__["default"] = (panel);
 
 /***/ })
 /******/ ]);
